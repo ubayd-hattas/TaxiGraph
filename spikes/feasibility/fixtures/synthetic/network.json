@@ -1,0 +1,124 @@
+{
+  "provenance": {
+    "kind": "synthetic",
+    "description": "Explicitly artificial software-test network. No value in this file is derived from, or claims anything about, real Cape Town routes, stops, schedules, boarding points or fares. It exists only to exercise the GTFS export, validator and OTP integration.",
+    "created": "2026-09-15",
+    "coordinates_note": "Placeholder coordinates on a small local grid, not a real place. Must be moved to fall inside the pinned smoke-streets OSM extract's bounding box (see tools-manifest.json) before an OTP graph build is attempted."
+  },
+  "agency": {
+    "agency_id": "SYN",
+    "agency_name": "Synthetic Test Agency",
+    "agency_url": "https://example.invalid/synthetic-agency",
+    "agency_timezone": "Africa/Johannesburg"
+  },
+  "service": {
+    "service_id": "SYN_WEEKDAY",
+    "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+    "start_date": "20260101",
+    "end_date": "20261231"
+  },
+  "stops": [
+    {"stop_id": "SYN_STOP_1", "stop_name": "Synthetic North Rank", "lat": 1.00000, "lon": 1.00000},
+    {"stop_id": "SYN_STOP_2", "stop_name": "Synthetic Market Corner (Route A side)", "lat": 1.00450, "lon": 1.00050},
+    {"stop_id": "SYN_STOP_3", "stop_name": "Synthetic South Terminus", "lat": 1.00900, "lon": 1.00100},
+    {"stop_id": "SYN_STOP_4", "stop_name": "Synthetic East Rank", "lat": 1.00420, "lon": 1.00550},
+    {"stop_id": "SYN_STOP_5", "stop_name": "Synthetic Market Corner (Route B side)", "lat": 1.00460, "lon": 1.00060},
+    {"stop_id": "SYN_STOP_6", "stop_name": "Synthetic West Terminus", "lat": 1.00480, "lon": 0.99500},
+    {"stop_id": "SYN_STOP_7", "stop_name": "Synthetic Riverside North", "lat": 1.02000, "lon": 1.00000},
+    {"stop_id": "SYN_STOP_8", "stop_name": "Synthetic Riverside South", "lat": 1.02010, "lon": 1.00010}
+  ],
+  "routes": [
+    {"route_id": "SYN_A", "route_short_name": "SynA", "route_long_name": "Synthetic North-South", "route_type": 3},
+    {"route_id": "SYN_B", "route_short_name": "SynB", "route_long_name": "Synthetic East-West", "route_type": 3}
+  ],
+  "trips": [
+    {
+      "trip_id": "SYN_A_OUT",
+      "route_id": "SYN_A",
+      "direction_id": 0,
+      "direction_note": "Only the North-to-South direction is defined. No reverse trip exists; this is a deliberate negative control, not an omission.",
+      "stops": ["SYN_STOP_1", "SYN_STOP_2", "SYN_STOP_3"],
+      "stop_offsets_seconds": [0, 480, 960],
+      "headway_start": "06:00:00",
+      "headway_end": "18:00:00",
+      "headway_seconds": 1200,
+      "exact_times": 0
+    },
+    {
+      "trip_id": "SYN_B_OUT",
+      "route_id": "SYN_B",
+      "direction_id": 0,
+      "direction_note": "Only the East-to-West direction is defined.",
+      "stops": ["SYN_STOP_4", "SYN_STOP_5", "SYN_STOP_6"],
+      "stop_offsets_seconds": [0, 420, 900],
+      "headway_start": "06:00:00",
+      "headway_end": "18:00:00",
+      "headway_seconds": 1200,
+      "exact_times": 0
+    }
+  ],
+  "transfers": [
+    {
+      "from_stop_id": "SYN_STOP_2",
+      "to_stop_id": "SYN_STOP_5",
+      "transfer_type": 2,
+      "min_transfer_time_seconds": 180,
+      "note": "Deliberate short pedestrian transfer between the two synthetic routes at Market Corner."
+    }
+  ],
+  "negative_controls": [
+    {
+      "id": "unsupported_reverse_direction",
+      "origin_stop_id": "SYN_STOP_3",
+      "destination_stop_id": "SYN_STOP_1",
+      "expected_result": "no_journey",
+      "expected_reason": "unsupported_reverse_direction",
+      "note": "Route SYN_A only runs North to South. A South-to-North request must not be satisfied by silently reversing the trip."
+    },
+    {
+      "id": "false_transfer_across_barrier",
+      "origin_stop_id": "SYN_STOP_7",
+      "destination_stop_id": "SYN_STOP_8",
+      "expected_result": "no_journey",
+      "expected_reason": "false_transfer_across_barrier",
+      "note": "Riverside North/South sit close on the map but are not linked by any defined transfer or serving trip. Requires the pinned OSM extract to not fabricate a walk path; assert this once OTP evaluation runs."
+    },
+    {
+      "id": "outside_verified_service_window",
+      "origin_stop_id": "SYN_STOP_1",
+      "destination_stop_id": "SYN_STOP_3",
+      "requested_departure": "22:00:00",
+      "expected_result": "no_journey",
+      "expected_reason": "outside_verified_service_window",
+      "note": "Requested well after the synthetic service's 18:00 headway end."
+    },
+    {
+      "id": "outside_coverage",
+      "origin_lat": 5.00000,
+      "origin_lon": 5.00000,
+      "destination_stop_id": "SYN_STOP_1",
+      "expected_result": "no_journey",
+      "expected_reason": "outside_coverage",
+      "note": "Origin far outside the synthetic network's bounding box."
+    }
+  ],
+  "positive_cases": [
+    {
+      "id": "direct_north_south",
+      "origin_stop_id": "SYN_STOP_1",
+      "destination_stop_id": "SYN_STOP_3",
+      "requested_departure": "07:00:00",
+      "expected_result": "journey_found",
+      "expected_route_sequence": ["SYN_A"]
+    },
+    {
+      "id": "transfer_market_corner",
+      "origin_stop_id": "SYN_STOP_1",
+      "destination_stop_id": "SYN_STOP_6",
+      "requested_departure": "07:00:00",
+      "expected_result": "journey_found",
+      "expected_route_sequence": ["SYN_A", "SYN_B"],
+      "expected_transfer": {"from_stop_id": "SYN_STOP_2", "to_stop_id": "SYN_STOP_5", "mode": "walk"}
+    }
+  ]
+}

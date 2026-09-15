@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Feasibility spike: ignored per docs/SOL-HANDOFF.md
+# (real inputs, downloaded tools, and generated artifacts must not be committed)
+spikes/feasibility/local/*
+!spikes/feasibility/local/.gitkeep
+!spikes/feasibility/local/tools/
+spikes/feasibility/local/tools/*
+!spikes/feasibility/local/tools/.gitkeep
+spikes/feasibility/out/*
+!spikes/feasibility/out/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

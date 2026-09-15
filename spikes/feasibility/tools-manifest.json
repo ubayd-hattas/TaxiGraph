@@ -1,0 +1,26 @@
+{
+  "note": "Pins for external binaries used by the feasibility spike. sha256 stays null until the exact release artifact is downloaded and verified; a null sha256 fails the prerequisite check on purpose so a build never trusts an unverified jar.",
+  "java": {
+    "min_major_version": 25
+  },
+  "tools": {
+    "otp": {
+      "version": "2.9.0",
+      "release_commit": "9babe45ffc9327933129f705c648137ecd96cdbe",
+      "local_path": "local/tools/otp-shaded-2.9.0.jar",
+      "sha256": null
+    },
+    "gtfs_validator": {
+      "version": null,
+      "note": "Pin the exact MobilityData gtfs-validator-cli release filename/version once selected; see docs/DATA-SOURCES.md and docs/SOL-HANDOFF.md.",
+      "local_path": "local/tools/gtfs-validator-cli.jar",
+      "sha256": null
+    },
+    "osm_extract": {
+      "version": null,
+      "note": "Small overlapping OSM PBF extract for the synthetic smoke network's street data. Reuse an appropriately licensed existing OTP test fixture rather than building a road graph.",
+      "local_path": "local/tools/smoke-streets.osm.pbf",
+      "sha256": null
+    }
+  }
+}
