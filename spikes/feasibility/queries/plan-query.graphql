@@ -1,0 +1,52 @@
+# Manually verified against a live OTP 2.9.0 instance (loopback), 2026-09-16,
+# running the synthetic smoke graph built by this spike. Not guessed: built
+# field-by-field from `__type` introspection of PlanLabeledLocationInput,
+# PlanDateTimeInput, PlanConnection, Itinerary and Leg on that same instance,
+# then confirmed to return real itineraries for the fixture's positive cases
+# and the expected RoutingError codes for its negative controls. See
+# docs/FEASIBILITY-RESULTS.md for the recorded request/response pairs.
+#
+# Re-verify this query (introspect again, re-run by hand) after any OTP
+# version bump before trusting its results.
+query TaxiGraphSpikePlan(
+  $origin: PlanLabeledLocationInput!
+  $destination: PlanLabeledLocationInput!
+  $earliestDeparture: OffsetDateTime
+) {
+  planConnection(
+    origin: $origin
+    destination: $destination
+    dateTime: { earliestDeparture: $earliestDeparture }
+  ) {
+    routingErrors {
+      code
+      description
+    }
+    edges {
+      node {
+        start
+        end
+        numberOfTransfers
+        legs {
+          mode
+          route {
+            id
+            shortName
+          }
+          from {
+            name
+            stop {
+              gtfsId
+            }
+          }
+          to {
+            name
+            stop {
+              gtfsId
+            }
+          }
+        }
+      }
+    }
+  }
+}

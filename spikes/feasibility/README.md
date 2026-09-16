@@ -17,7 +17,7 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-Java 25 and the pinned OTP/GTFS-validator jars are **not installed by this package**. Download them yourself, place them at the paths in [tools-manifest.json](tools-manifest.json), and fill in each `sha256` once you've verified the download. `check` refuses to run against an unpinned or unverified jar.
+Java 25 and the pinned OTP/GTFS-validator jars are **not installed by this package** — download them yourself (or reuse the ones already pinned in [tools-manifest.json](tools-manifest.json) for this checkout) and place them at the paths it lists, filling in each `sha256` once you've verified the download. `check` refuses to run against an unpinned or unverified jar. An OSM extract is still not pinned; see [docs/FEASIBILITY-RESULTS.md](../../docs/FEASIBILITY-RESULTS.md) for what that currently costs.
 
 ## Commands
 
@@ -37,11 +37,14 @@ Run from `spikes/feasibility`, inside the venv:
 src/taxigraph_spike/   package code
 tests/                 pytest suite (mocks external binaries; no Java required to run)
 fixtures/synthetic/    hand-written, explicitly artificial smoke network
+queries/               tracked: the manually verified OTP GraphQL plan query
 local/                 ignored: real inputs, downloaded jars, private evidence
 out/                   ignored: generated GTFS, graph, logs, reports
-tools-manifest.json    pins for Java/OTP/validator/OSM extract (checksums start null)
+tools-manifest.json    pins for Java/OTP/validator/OSM extract
 ```
 
-## Current blocker
+## Current status
 
-No Java runtime is installed in this environment, so `check --mode smoke` currently reports `software_status: blocked` (exit 2) after exporting the synthetic GTFS feed but before reaching the validator/OTP steps. Real mode is separately blocked: no source-use rights or field evidence have been supplied yet, so no `local/real-manifest.json` exists. Both are expected, reported states, not failures of the harness itself.
+`check --mode smoke` passes end-to-end (exit 0): synthetic GTFS export, validator (0 errors), OTP 2.9.0 graph build, live server, and all 6 fixture cases confirmed against a manually verified GraphQL query. No OSM extract is pinned yet, so the graph builds from GTFS alone — see [docs/FEASIBILITY-RESULTS.md](../../docs/FEASIBILITY-RESULTS.md) for exactly what that does and doesn't prove.
+
+Real mode is still blocked: no source-use rights or field evidence have been supplied yet, so no `local/real-manifest.json` exists. That's an expected, reported state (ROADMAP task 2 work), not a failure of the harness.

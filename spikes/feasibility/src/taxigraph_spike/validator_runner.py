@@ -26,7 +26,13 @@ class ValidatorResult:
     report_path: Path | None = None
 
 
-def run_gtfs_validator(jar_path: Path, feed_zip: Path, out_dir: Path, timeout_seconds: int = 300) -> ValidatorResult:
+def run_gtfs_validator(
+    jar_path: Path,
+    feed_zip: Path,
+    out_dir: Path,
+    java_binary: str = "java",
+    timeout_seconds: int = 300,
+) -> ValidatorResult:
     if not jar_path.is_file():
         return ValidatorResult("missing_prerequisite", f"validator jar not found at {jar_path}")
     if not feed_zip.is_file():
@@ -34,7 +40,7 @@ def run_gtfs_validator(jar_path: Path, feed_zip: Path, out_dir: Path, timeout_se
 
     out_dir.mkdir(parents=True, exist_ok=True)
     args = [
-        "java",
+        java_binary,
         "-jar",
         str(jar_path.resolve()),
         "-i",
@@ -46,7 +52,7 @@ def run_gtfs_validator(jar_path: Path, feed_zip: Path, out_dir: Path, timeout_se
     try:
         proc = run_hidden(args, timeout=timeout_seconds)
     except FileNotFoundError:
-        return ValidatorResult("missing_prerequisite", "java not found on PATH")
+        return ValidatorResult("missing_prerequisite", f"{java_binary} not found")
     except subprocess.TimeoutExpired:
         return ValidatorResult("error", f"validator did not finish within {timeout_seconds}s")
 

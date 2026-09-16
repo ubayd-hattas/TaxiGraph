@@ -29,6 +29,7 @@ GTFS_TABLES = (
 )
 
 ROUTE_TYPE_TAXI_PROXY = 3  # GTFS route_type 3 = bus; no dedicated informal-taxi type exists.
+FEED_ID = "SYN"  # Explicit rather than relying on OTP's positional default ("1").
 
 
 @dataclass(frozen=True)
@@ -197,13 +198,24 @@ def build_gtfs(network: dict[str, Any], out_dir: Path) -> GtfsExportResult:
 
     _write_csv(
         out_dir / "feed_info.txt",
-        ["feed_publisher_name", "feed_publisher_url", "feed_lang", "feed_version"],
+        [
+            "feed_publisher_name",
+            "feed_publisher_url",
+            "feed_lang",
+            "feed_version",
+            "feed_start_date",
+            "feed_end_date",
+            "feed_id",
+        ],
         [
             {
                 "feed_publisher_name": "TaxiGraph feasibility spike (synthetic)",
                 "feed_publisher_url": agency["agency_url"],
                 "feed_lang": "en",
                 "feed_version": network["provenance"]["created"],
+                "feed_start_date": service["start_date"],
+                "feed_end_date": service["end_date"],
+                "feed_id": FEED_ID,
             }
         ],
     )

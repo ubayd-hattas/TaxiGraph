@@ -1,24 +1,35 @@
 {
   "note": "Pins for external binaries used by the feasibility spike. sha256 stays null until the exact release artifact is downloaded and verified; a null sha256 fails the prerequisite check on purpose so a build never trusts an unverified jar.",
   "java": {
-    "min_major_version": 25
+    "min_major_version": 25,
+    "vendor": "Eclipse Temurin",
+    "version": "25.0.4.1+1",
+    "distribution": "OpenJDK25U-jdk_x64_windows_hotspot_25.0.4.1_1.zip",
+    "source_url": "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.4.1%2B1/OpenJDK25U-jdk_x64_windows_hotspot_25.0.4.1_1.zip",
+    "zip_sha256": "00c847d804f4a78e9f04f2683faf14fed898535b177b7fc704486cb0284e9283",
+    "local_extract_dir": "local/tools/jdk-25.0.4.1+1",
+    "java_binary": "local/tools/jdk-25.0.4.1+1/bin/java.exe"
   },
   "tools": {
     "otp": {
       "version": "2.9.0",
       "release_commit": "9babe45ffc9327933129f705c648137ecd96cdbe",
+      "release_commit_verified": "confirmed via GitHub API: v2.9.0 tag -> annotated tag object -> commit 9babe45ffc9327933129f705c648137ecd96cdbe, 2026-09-16",
+      "source_url": "https://github.com/opentripplanner/OpenTripPlanner/releases/download/v2.9.0/otp-shaded-2.9.0.jar",
       "local_path": "local/tools/otp-shaded-2.9.0.jar",
-      "sha256": null
+      "sha256": "112824122cd1a89e2dff6b5b3088ffbd4f04c3c0a400ca9f08f17b762f5325f6",
+      "sha256_provenance": "self-computed at download time; file size (183261367 bytes) matches the GitHub release asset metadata. OTP publishes a detached GPG signature (otp-shaded-2.9.0.jar.asc), not a plain checksum file, so this pin guards local corruption/tampering, not a compromised upstream release."
     },
     "gtfs_validator": {
-      "version": null,
-      "note": "Pin the exact MobilityData gtfs-validator-cli release filename/version once selected; see docs/DATA-SOURCES.md and docs/SOL-HANDOFF.md.",
-      "local_path": "local/tools/gtfs-validator-cli.jar",
-      "sha256": null
+      "version": "8.0.1",
+      "source_url": "https://github.com/MobilityData/gtfs-validator/releases/download/v8.0.1/gtfs-validator-8.0.1-cli.jar",
+      "local_path": "local/tools/gtfs-validator-8.0.1-cli.jar",
+      "sha256": "19293ddd9b6f954f216d4f12054bd8a3232921751c4484339e339764a91000e2",
+      "sha256_provenance": "self-computed at download time; MobilityData does not publish an independent checksum file for this release, so this pin only guards against local corruption/tampering after first download, not against a compromised upstream release"
     },
     "osm_extract": {
       "version": null,
-      "note": "Small overlapping OSM PBF extract for the synthetic smoke network's street data. Reuse an appropriately licensed existing OTP test fixture rather than building a road graph.",
+      "note": "Small overlapping OSM PBF extract for the synthetic smoke network's street data. Reuse an appropriately licensed existing OTP test fixture rather than building a road graph. Treated as soft-optional in the CLI: its absence does not block the smoke chain, but any case needing real street topology (false_transfer_across_barrier) is not meaningfully validated without it. Not yet obtained.",
       "local_path": "local/tools/smoke-streets.osm.pbf",
       "sha256": null
     }

@@ -37,7 +37,7 @@ class CheckReport:
 def write_report(report: CheckReport, out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as handle:
-        json.dump(report.to_dict(), handle, indent=2, sort_keys=True)
+        json.dump(report.to_dict(), handle, indent=2, sort_keys=True, default=str)
 
 
 def decide_exit_code(report: CheckReport) -> int:

@@ -29,9 +29,10 @@ class BuildResult:
 def build_graph(
     jar_path: Path,
     gtfs_zip: Path,
-    osm_pbf: Path,
     build_dir: Path,
     graph_dir: Path,
+    osm_pbf: Path | None = None,
+    java_binary: str = "java",
     heap: str = "-Xmx2G",
     timeout_seconds: int = 900,
 ) -> BuildResult:
@@ -39,21 +40,25 @@ def build_graph(
         return BuildResult("missing_prerequisite", f"OTP jar not found at {jar_path}")
     if not gtfs_zip.is_file():
         return BuildResult("error", f"GTFS feed not found at {gtfs_zip}")
-    if not osm_pbf.is_file():
+    if osm_pbf is not None and not osm_pbf.is_file():
         return BuildResult("missing_prerequisite", f"OSM extract not found at {osm_pbf}")
 
     build_dir.mkdir(parents=True, exist_ok=True)
     graph_dir.mkdir(parents=True, exist_ok=True)
 
     # Build input dir must hold only the intended GTFS/PBF, per SOL-HANDOFF.
+    # OTP's input-type sniffing keys off "gtfs" appearing in the filename
+    # (a bare "feed.zip" is skipped as an unrecognized file), so the copy is
+    # always renamed rather than reusing the export's own filename.
     for existing in build_dir.iterdir():
         if existing.is_file():
             existing.unlink()
-    shutil.copy2(gtfs_zip, build_dir / gtfs_zip.name)
-    shutil.copy2(osm_pbf, build_dir / osm_pbf.name)
+    shutil.copy2(gtfs_zip, build_dir / "gtfs.zip")
+    if osm_pbf is not None:
+        shutil.copy2(osm_pbf, build_dir / osm_pbf.name)
 
     args = [
-        "java",
+        java_binary,
         heap,
         "-jar",
         str(jar_path.resolve()),
@@ -65,7 +70,7 @@ def build_graph(
     try:
         proc = run_hidden(args, timeout=timeout_seconds)
     except FileNotFoundError:
-        return BuildResult("missing_prerequisite", "java not found on PATH")
+        return BuildResult("missing_prerequisite", f"{java_binary} not found")
     except subprocess.TimeoutExpired:
         return BuildResult("error", f"OTP build did not finish within {timeout_seconds}s")
 
@@ -78,9 +83,15 @@ def build_graph(
     return BuildResult("ok", "graph built", graph_dir=graph_dir, build_log=build_log)
 
 
-def start_server(jar_path: Path, graph_dir: Path, heap: str = "-Xmx2G", port: int = LOOPBACK_PORT) -> subprocess.Popen:
+def start_server(
+    jar_path: Path,
+    graph_dir: Path,
+    java_binary: str = "java",
+    heap: str = "-Xmx2G",
+    port: int = LOOPBACK_PORT,
+) -> subprocess.Popen:
     args = [
-        "java",
+        java_binary,
         heap,
         "-jar",
         str(jar_path.resolve()),
@@ -93,6 +104,12 @@ def start_server(jar_path: Path, graph_dir: Path, heap: str = "-Xmx2G", port: in
 
 
 def wait_for_ready(base_url: str, timeout_seconds: int = 120, poll_interval_seconds: float = 2.0) -> bool:
+    """Poll until something is listening on base_url.
+
+    Any HTTP response (even an error status like 404/405) proves the server
+    is up; only a failure to connect at all means it isn't ready yet.
+    """
+
     import urllib.error
     import urllib.request
 
@@ -101,6 +118,8 @@ def wait_for_ready(base_url: str, timeout_seconds: int = 120, poll_interval_seco
         try:
             with urllib.request.urlopen(base_url, timeout=5):
                 return True
+        except urllib.error.HTTPError:
+            return True
         except (urllib.error.URLError, OSError):
             time.sleep(poll_interval_seconds)
     return False

@@ -18,7 +18,10 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 TOOLS_MANIFEST_PATH = BASE_DIR / "tools-manifest.json"
 OUT_DIR = BASE_DIR / "out"
 GRAPHQL_URL = f"http://localhost:{otp_runner.LOOPBACK_PORT}{otp_runner.GRAPHQL_PATH}"
-PLAN_QUERY_PATH = OUT_DIR / "otp-schema" / "plan-query.graphql"
+PLAN_QUERY_PATH = BASE_DIR / "queries" / "plan-query.graphql"
+
+
+SOFT_OPTIONAL_TOOLS = {"tool:osm_extract"}
 
 
 def run_smoke(base_dir: Path = BASE_DIR) -> report.CheckReport:
@@ -35,7 +38,8 @@ def run_smoke(base_dir: Path = BASE_DIR) -> report.CheckReport:
         "warnings": export_result.warnings,
     }
 
-    if not prereq.ok:
+    required_checks = [c for c in prereq.checks if c.name not in SOFT_OPTIONAL_TOOLS]
+    if not all(c.ok for c in required_checks):
         details["blocked_reason"] = "missing prerequisites; GTFS export ran, OTP/validator steps skipped"
         return report.CheckReport(
             mode="smoke",
@@ -47,11 +51,20 @@ def run_smoke(base_dir: Path = BASE_DIR) -> report.CheckReport:
         )
 
     manifest = prerequisites.load_tools_manifest(TOOLS_MANIFEST_PATH)
+    java_binary = prerequisites.resolve_java_binary(base_dir, manifest)
     validator_jar = base_dir / manifest["tools"]["gtfs_validator"]["local_path"]
     otp_jar = base_dir / manifest["tools"]["otp"]["local_path"]
-    osm_pbf = base_dir / manifest["tools"]["osm_extract"]["local_path"]
+    osm_pbf_path = base_dir / manifest["tools"]["osm_extract"]["local_path"]
+    osm_pbf = osm_pbf_path if osm_pbf_path.is_file() else None
+    if osm_pbf is None:
+        details["street_data_status"] = (
+            "no pinned OSM extract present; building a GTFS-only graph. Cases that need real street "
+            "topology (e.g. false_transfer_across_barrier) are not meaningfully validated by this run."
+        )
 
-    validator_result = validator_runner.run_gtfs_validator(validator_jar, export_result.zip_path, OUT_DIR / "validator")
+    validator_result = validator_runner.run_gtfs_validator(
+        validator_jar, export_result.zip_path, OUT_DIR / "validator", java_binary=java_binary
+    )
     details["validator"] = validator_result.__dict__
     if validator_result.status != "ok":
         return report.CheckReport(
@@ -65,7 +78,9 @@ def run_smoke(base_dir: Path = BASE_DIR) -> report.CheckReport:
 
     build_dir = OUT_DIR / "otp-build"
     graph_dir = OUT_DIR / "otp-graph"
-    build_result = otp_runner.build_graph(otp_jar, export_result.zip_path, osm_pbf, build_dir, graph_dir)
+    build_result = otp_runner.build_graph(
+        otp_jar, export_result.zip_path, build_dir, graph_dir, osm_pbf=osm_pbf, java_binary=java_binary
+    )
     details["otp_build"] = {"status": build_result.status, "detail": build_result.detail}
     if build_result.status != "ok":
         return report.CheckReport(
@@ -77,7 +92,7 @@ def run_smoke(base_dir: Path = BASE_DIR) -> report.CheckReport:
             details=details,
         )
 
-    proc = otp_runner.start_server(otp_jar, graph_dir)
+    proc = otp_runner.start_server(otp_jar, graph_dir, java_binary=java_binary)
     try:
         ready = otp_runner.wait_for_ready(f"http://localhost:{otp_runner.LOOPBACK_PORT}")
         if not ready:

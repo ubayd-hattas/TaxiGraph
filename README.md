@@ -6,9 +6,9 @@ Rather than guessing at schedules or inventing service where none is confirmed, 
 
 ## Status
 
-**Documentation and architecture only, no implementation yet.** The project is currently at the feasibility-spike stage: proving that a small, manually verified set of real Cape Town journeys can be routed correctly before any database, frontend, or public deployment is built.
+**Feasibility-spike stage.** The project's first milestone is proving that a small, manually verified set of real Cape Town journeys can be routed correctly, before any database, frontend, or public deployment is built.
 
-No OTP graph has been built and no real journey has been validated. See [docs/MVP-SPEC.md](docs/MVP-SPEC.md) for the exact gates that must pass before that claim can be made.
+The software half of that spike now passes: an explicitly synthetic test network builds and routes correctly through a real, pinned OpenTripPlanner 2.9.0 instance ([details](docs/FEASIBILITY-RESULTS.md)). **No real Cape Town journey has been validated, and no route data has been published** — that requires resolved data-use rights and field-verified evidence that don't exist yet. See [docs/MVP-SPEC.md](docs/MVP-SPEC.md) for the exact gates that must pass before that claim can be made.
 
 ## How it's meant to work
 
@@ -31,6 +31,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full component breakdow
 | [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) | Source data and rights/licensing notes |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Background research behind the architecture decision |
 | [docs/SOL-HANDOFF.md](docs/SOL-HANDOFF.md) | Spec for the current active task (feasibility harness) |
+| [docs/FEASIBILITY-RESULTS.md](docs/FEASIBILITY-RESULTS.md) | Current status of the feasibility spike |
 
 ## Principles
 

@@ -8,7 +8,7 @@ def test_smoke_reports_blocked_when_java_missing(monkeypatch):
     monkeypatch.setattr(
         prerequisites,
         "check_java_version",
-        lambda min_major=25: prerequisites.CheckResult("java_version", False, "java not found on PATH"),
+        lambda *args, **kwargs: prerequisites.CheckResult("java_version", False, "java not found on PATH"),
     )
 
     exit_code = cli.main(["check", "--mode", "smoke"])

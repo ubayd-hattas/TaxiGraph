@@ -48,18 +48,18 @@ def check_python_version(min_version: tuple[int, int] = MIN_PYTHON) -> CheckResu
     return CheckResult("python_version", ok, detail)
 
 
-def check_java_version(min_major: int = MIN_JAVA_MAJOR) -> CheckResult:
+def check_java_version(java_binary: str = "java", min_major: int = MIN_JAVA_MAJOR) -> CheckResult:
     try:
         proc = subprocess.run(
-            ["java", "-version"],
+            [java_binary, "-version"],
             capture_output=True,
             text=True,
             timeout=10,
         )
     except FileNotFoundError:
-        return CheckResult("java_version", False, "java not found on PATH")
+        return CheckResult("java_version", False, f"{java_binary} not found")
     except (OSError, subprocess.TimeoutExpired) as exc:
-        return CheckResult("java_version", False, f"java -version failed: {exc}")
+        return CheckResult("java_version", False, f"{java_binary} -version failed: {exc}")
 
     output = proc.stderr + proc.stdout
     match = re.search(r'version "(\d+)', output)
@@ -68,8 +68,17 @@ def check_java_version(min_major: int = MIN_JAVA_MAJOR) -> CheckResult:
 
     major = int(match.group(1))
     ok = major >= min_major
-    detail = f"java {major} (need >= {min_major})"
+    detail = f"java {major} (need >= {min_major}) via {java_binary}"
     return CheckResult("java_version", ok, detail)
+
+
+def resolve_java_binary(base_dir: Path, manifest: dict) -> str:
+    """Prefer the pinned local JDK; fall back to whatever `java` is on PATH."""
+
+    pinned = manifest.get("java", {}).get("java_binary")
+    if pinned and (base_dir / pinned).is_file():
+        return str((base_dir / pinned).resolve())
+    return "java"
 
 
 def _sha256_of(path: Path) -> str:
@@ -114,13 +123,15 @@ def load_tools_manifest(manifest_path: Path) -> dict:
 
 
 def run_prerequisite_checks(base_dir: Path, manifest_path: Path) -> PrerequisiteReport:
-    checks = [check_python_version(), check_java_version()]
+    checks = [check_python_version()]
 
     if not manifest_path.is_file():
         checks.append(CheckResult("tools_manifest", False, f"missing tools manifest at {manifest_path}"))
+        checks.append(check_java_version())
         return PrerequisiteReport(checks)
 
     manifest = load_tools_manifest(manifest_path)
+    checks.append(check_java_version(resolve_java_binary(base_dir, manifest), manifest.get("java", {}).get("min_major_version", MIN_JAVA_MAJOR)))
     for name, spec in manifest.get("tools", {}).items():
         checks.append(check_tool_artifact(name, spec, base_dir))
 

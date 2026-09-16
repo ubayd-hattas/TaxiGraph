@@ -49,3 +49,17 @@ def test_write_report_round_trips(tmp_path: Path):
     report.write_report(r, out_path)
     assert out_path.is_file()
     assert "foo" in out_path.read_text(encoding="utf-8")
+
+
+def test_write_report_serializes_path_values(tmp_path: Path):
+    r = report.CheckReport(
+        mode="smoke",
+        software_status=report.STATUS_PASS,
+        real_data_status=report.STATUS_NOT_APPLICABLE,
+        rights_status=report.STATUS_NOT_APPLICABLE,
+        journey_validation_status=report.STATUS_PASS,
+        details={"report_path": tmp_path / "validator" / "report.json"},
+    )
+    out_path = tmp_path / "out" / "report.json"
+    report.write_report(r, out_path)
+    assert "validator" in out_path.read_text(encoding="utf-8")
